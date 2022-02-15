@@ -3,9 +3,10 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+qhack/
+
 # C extensions
 *.so
-
 # Distribution / packaging
 .Python
 build/
