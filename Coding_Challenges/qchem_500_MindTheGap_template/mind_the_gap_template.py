@@ -14,9 +14,45 @@ def ground_state_VQE(H):
         - (float): The ground state energy
         - (np.ndarray): The ground state calculated through your optimization routine
     """
-
     # QHACK #
+    dev = qml.device("default.qubit", wires=4)
+    def circuit(param, wires):
+        qml.BasisState(np.array([1,1,0,0]), wires=wires)
+        qml.DoubleExcitation(param, wires=[0, 1, 2, 3])
 
+    @qml.qnode(dev)
+    def cost_fn(param):
+        circuit(param, wires=range(4))
+        return qml.expval(H)
+
+    opt = qml.GradientDescentOptimizer(stepsize=0.4)
+    theta = np.array(0.0, requires_grad=True)
+
+    # store the values of the cost function
+    energy = [cost_fn(theta)]
+
+    # store the values of the circuit parameter
+    angle = [theta]
+
+    max_iterations = 100
+    conv_tol = 1e-06
+
+    for n in range(max_iterations):
+        theta, prev_energy = opt.step_and_cost(cost_fn, theta)
+
+        energy.append(cost_fn(theta))
+        angle.append(theta)
+
+        conv = np.abs(energy[-1] - prev_energy)
+
+        if conv <= conv_tol:
+            break
+
+    ground_state = np.zeros(16)
+    ground_state[3] = np.cos(angle[-1]/2.0)
+    ground_state[12] = -np.sin(angle[-1]/2.0)
+
+    return energy[-1], ground_state
     # QHACK #
 
 
@@ -33,7 +69,10 @@ def create_H1(ground_state, beta, H):
     """
 
     # QHACK #
-
+    outer = np.outer(ground_state, ground_state)
+    #print(outer)
+    H1 = qml.utils.sparse_hamiltonian(H).real.toarray() + beta * outer
+    return qml.Hermitian(H1, wires=range(4))
     # QHACK #
 
 
@@ -48,6 +87,44 @@ def excited_state_VQE(H1):
     """
 
     # QHACK #
+    dev = qml.device("default.qubit", wires=4)
+    def circuit(param, wires):
+        qml.BasisState(np.array([0,1,0,1]), wires=wires)
+        qml.DoubleExcitation(param, wires=[0, 1, 2, 3])
+
+    @qml.qnode(dev)
+    def cost_fn(param):
+        circuit(param, wires=range(4))
+        return qml.expval(H)
+
+    opt = qml.GradientDescentOptimizer(stepsize=0.4)
+    theta = np.array(0.0, requires_grad=True)
+
+    # store the values of the cost function
+    energy = [cost_fn(theta)]
+
+    # store the values of the circuit parameter
+    angle = [theta]
+
+    max_iterations = 100
+    conv_tol = 1e-06
+
+    for n in range(max_iterations):
+        theta, prev_energy = opt.step_and_cost(cost_fn, theta)
+
+        energy.append(cost_fn(theta))
+        angle.append(theta)
+
+        conv = np.abs(energy[-1] - prev_energy)
+
+        if conv <= conv_tol:
+            break
+
+    ground_state = np.zeros(16)
+    ground_state[3] = np.cos(angle[-1]/2.0)
+    ground_state[12] = -np.sin(angle[-1]/2.0)
+
+    return energy[-1]
 
     # QHACK #
 
