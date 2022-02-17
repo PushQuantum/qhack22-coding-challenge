@@ -18,6 +18,21 @@ def qRAM(thetas):
     # QHACK #
 
     # Use this space to create auxiliary functions if you need it.
+    def apply_roation(idx):
+        binary_idx = format(idx, '03b')
+        for i in range(3):
+            if binary_idx[i]=='0':
+                qml.PauliX(wires=i)
+        
+
+        U = np.identity(16)
+        rotation = np.array([[np.cos(thetas[idx]/2), -np.sin(thetas[idx]/2)],[np.sin(thetas[idx]/2), np.cos(thetas[idx]/2)]])
+        U[14:17,14:17] = rotation
+        qml.QubitUnitary(U, wires=range(4))
+
+        for i in range(3):
+            if binary_idx[i]=='0':
+                qml.PauliX(wires=i)
 
     # QHACK #
 
@@ -29,6 +44,12 @@ def qRAM(thetas):
         # QHACK #
 
         # Create your circuit: the first three qubits will refer to the index, the fourth to the RY rotation.
+        qml.Hadamard(wires=0)
+        qml.Hadamard(wires=1)
+        qml.Hadamard(wires=2)
+
+        for idx in range(len(thetas)):
+            apply_roation(idx)
 
         # QHACK #
 
